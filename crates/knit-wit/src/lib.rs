@@ -1,4 +1,4 @@
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
@@ -27,9 +27,9 @@ impl Guest for KnitWit {
             return Err("No worlds provided to be knit".to_owned());
         }
 
-        let output_package = output_package.unwrap_or("local:combined-wit".to_owned());
-        let output_world = output_world.unwrap_or("combined".to_owned());
-        let output_dir = output_dir.unwrap_or("combined-wit".to_owned());
+        let output_package = output_package.unwrap_or_else(|| "local:combined-wit".to_owned());
+        let output_world = output_world.unwrap_or_else(|| "combined".to_owned());
+        let output_dir = output_dir.unwrap_or_else(|| "combined-wit".to_owned());
 
         let mut resolve = Resolve::default();
         let id = resolve
@@ -72,14 +72,13 @@ fn merge_worlds(
             .worlds
             .iter()
             .find(|(world, _)| resolve.worlds[*world].name == world_name)
-            .unwrap();
+            .ok_or_else(|| anyhow!("could not find world named '{world_name}'"))?;
         resolve
             .merge_worlds(world_to_merge, base_world)
-            .map_err(|e| {
+            .with_context(|| {
                 anyhow!(
-                    "unable to merge with world '{}' due to: {}",
+                    "unable to merge with world '{}'",
                     resolve.worlds[world_to_merge].name,
-                    e
                 )
             })?;
     }

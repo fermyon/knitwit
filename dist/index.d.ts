@@ -5,5 +5,5 @@ interface knitWitOptions {
     outputPackage?: string;
     outDir?: string;
 }
-export declare function knitWit(opts?: knitWitOptions): Promise<void>;
+export declare function knitWit(opts?: knitWitOptions, ignoreConfigFile?: boolean): Promise<void>;
 export {};

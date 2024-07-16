@@ -14,16 +14,16 @@ let knitWitConfigSchema = object({
         world: string().required(),
     })),
 });
-export async function knitWit(opts = {}) {
+export async function knitWit(opts = {}, ignoreConfigFile = false) {
+    console.log(`Attempting to read ${KNIT_WIT_CONFIG_FILE}`);
+    // attempt to read knit-wit.json to get witPaths and world details
+    let { packages, witPaths, worlds } = !ignoreConfigFile
+        ? await attemptParsingConfigFile()
+        : { packages: [], witPaths: [], worlds: [] };
+    opts.witPaths = opts.witPaths ? opts.witPaths.concat(witPaths) : witPaths;
+    opts.worlds = opts.worlds ? opts.worlds.concat(worlds) : worlds;
+    console.log("loaded configuration for:", packages);
     validateArguments(opts);
-    if (!opts.witPaths) {
-        console.log(`Attempting to read ${KNIT_WIT_CONFIG_FILE} as worlds and witPaths are empty`);
-        // attempt to read knit-wit.json to get witPaths and world details
-        let { packages, witPaths, worlds } = await attemptParsingConfigFile();
-        opts.witPaths = witPaths;
-        opts.worlds = opts.worlds ? opts.worlds.concat(worlds) : worlds;
-        console.log("loaded configuration for:", packages);
-    }
     // witPaths and worlds will be non empty as they will be populated from
     // knit-wit.json if they were empty
     let combinedWitOuput = _knitWit(opts.witPaths, opts.worlds, opts.outputWorld, opts.outputPackage, opts.outDir);
@@ -57,8 +57,12 @@ async function attemptParsingConfigFile() {
     }
 }
 function validateArguments(opts) {
-    if (opts.witPaths != undefined && opts.witPaths.length === 0) {
-        throw new Error("witPaths should either be undefined or non empty list");
+    var _a, _b;
+    if (!(opts.witPaths && ((_a = opts.witPaths) === null || _a === void 0 ? void 0 : _a.length) > 0)) {
+        throw new Error("withPaths is empty");
+    }
+    if (!(opts.worlds && ((_b = opts.worlds) === null || _b === void 0 ? void 0 : _b.length) > 0)) {
+        throw new Error("Worlds is empty");
     }
 }
 function writeFilesSync(fileTuples) {

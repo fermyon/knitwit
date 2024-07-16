@@ -38,20 +38,21 @@ interface ParsedConfigFileOutput {
   worlds: string[];
 }
 
-export async function knitWit(opts: knitWitOptions = {}) {
+export async function knitWit(
+  opts: knitWitOptions = {},
+  ignoreConfigFile: boolean = false,
+) {
+  console.log(`Attempting to read ${KNIT_WIT_CONFIG_FILE}`);
+  // attempt to read knit-wit.json to get witPaths and world details
+  let { packages, witPaths, worlds } = !ignoreConfigFile
+    ? await attemptParsingConfigFile()
+    : { packages: [], witPaths: [], worlds: [] };
+  opts.witPaths = opts.witPaths ? opts.witPaths.concat(witPaths) : witPaths;
+  opts.worlds = opts.worlds ? opts.worlds.concat(worlds) : worlds;
+
+  console.log("loaded configuration for:", packages);
+
   validateArguments(opts);
-
-  if (!opts.witPaths) {
-    console.log(
-      `Attempting to read ${KNIT_WIT_CONFIG_FILE} as worlds and witPaths are empty`,
-    );
-    // attempt to read knit-wit.json to get witPaths and world details
-    let { packages, witPaths, worlds } = await attemptParsingConfigFile();
-    opts.witPaths = witPaths;
-    opts.worlds = opts.worlds ? opts.worlds.concat(worlds) : worlds;
-
-    console.log("loaded configuration for:", packages);
-  }
   // witPaths and worlds will be non empty as they will be populated from
   // knit-wit.json if they were empty
   let combinedWitOuput = _knitWit(
@@ -65,6 +66,12 @@ export async function knitWit(opts: knitWitOptions = {}) {
 }
 
 async function attemptParsingConfigFile(): Promise<ParsedConfigFileOutput> {
+  // If the file does not exist just return an empty response
+  if (!fs.existsSync(KNIT_WIT_CONFIG_FILE)) {
+    return {
+      packages: [], witPaths: [], worlds: []
+    }
+  }
   try {
     let contents = fs.readFileSync(KNIT_WIT_CONFIG_FILE, "utf-8");
     let data = await knitWitConfigSchema.validate(JSON.parse(contents));
@@ -91,8 +98,11 @@ async function attemptParsingConfigFile(): Promise<ParsedConfigFileOutput> {
 }
 
 function validateArguments(opts: knitWitOptions) {
-  if (opts.witPaths != undefined && opts.witPaths.length === 0) {
-    throw new Error("witPaths should either be undefined or non empty list");
+  if (!(opts.witPaths && opts.witPaths?.length > 0)) {
+    throw new Error("withPaths is empty");
+  }
+  if (!(opts.worlds && opts.worlds?.length > 0)) {
+    throw new Error("Worlds is empty");
   }
 }
 
