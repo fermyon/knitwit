@@ -1,0 +1,5 @@
+package local:wit-knitter;
+
+world knit-wit{
+    export knit-wit: func(wit-paths: list<string>, worlds: list<string>, output-world: option<string>, output-package: option<string>, output: option<string>) -> result<list<tuple<string, string>>, string>;
+}

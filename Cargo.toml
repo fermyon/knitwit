@@ -1,0 +1,15 @@
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+members = ["crates/knit-wit"]
+resolver = "2"
+
+[workspace.dependencies]
+anyhow = "1.0.86"
+wasm-tools = "1.212.0"
+wit-bindgen = "0.27.0"
+wit-bindgen-core = "0.27.0"
+wit-component = "0.213.0"
+wit-parser = "0.213.0"

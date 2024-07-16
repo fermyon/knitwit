@@ -1,1 +1,1 @@
-# `knit-wit`
+# `knitWit`

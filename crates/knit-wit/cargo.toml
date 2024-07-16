@@ -1,0 +1,18 @@
+[package]
+name = "knit-wit"
+authors = [""]
+
+version.workspace = true
+edition.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+anyhow = { workspace = true }
+id-arena = "2.2.1"
+wasm-tools = { workspace = true }
+wit-bindgen = { workspace = true }
+wit-bindgen-core = { workspace = true }
+wit-component = { workspace = true }
+wit-parser = { workspace = true }
