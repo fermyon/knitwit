@@ -1,5 +1,5 @@
 [package]
-name = "knit-wit"
+name = "knitwit"
 authors = [""]
 
 version.workspace = true

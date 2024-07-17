@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context};
+use anyhow::anyhow;
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
@@ -7,13 +7,13 @@ use wit_component::{DecodedWasm, WitPrinter};
 use wit_parser::{PackageId, Resolve};
 
 wit_bindgen::generate!({
-    world: "knit-wit",
+    world: "knitwit",
 });
 
 struct KnitWit;
 
 impl Guest for KnitWit {
-    fn knit_wit(
+    fn knitwit(
         wit_paths: Vec<String>,
         worlds: Vec<String>,
         output_world: Option<String>,
@@ -75,10 +75,11 @@ fn merge_worlds(
             .ok_or_else(|| anyhow!("could not find world named '{world_name}'"))?;
         resolve
             .merge_worlds(world_to_merge, base_world)
-            .with_context(|| {
+            .map_err(|e| {
                 anyhow!(
-                    "unable to merge with world '{}'",
+                    "unable to merge with world '{}': {}",
                     resolve.worlds[world_to_merge].name,
+                    e
                 )
             })?;
     }

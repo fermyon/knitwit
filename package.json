@@ -1,10 +1,11 @@
 {
-  "name": "@fermyon/knit-wit",
+  "name": "@fermyon/knitwit",
   "version": "0.1.0",
   "description": "",
   "main": "dist/index.js",
   "bin": {
-    "knit-wit-postinstall": "./bin/knit-wit-postinstall.js"
+    "knitwit": "./bin/knitwit.mjs",
+    "knitwit-postinstall": "./bin/knitwit-postinstall.js"
   },
   "typings": "dist/index.d.t.s",
   "type": "module",

@@ -2,22 +2,9 @@
 
 import fs from 'fs';
 import path from 'path';
-import { object, string, array, number } from "yup";
 import { lock } from 'proper-lockfile';
-
-const KNIT_WIT_CONFIG_FILE = "knit-wit.json";
-
-let knitWitConfigSchema = object({
-    version: number().required(),
-    packages: array(
-        object({
-            name: string().required(),
-            witPath: string().required(),
-            world: string().required(),
-        }),
-    ),
-});
-
+import { knitWitConfigSchema } from '../dist/shared/knitwitConfigSchema.js';
+import { KNIT_WIT_CONFIG_FILE } from '../dist/shared/constants.js';
 
 const getFilePath = () => path.join(process.env.INIT_CWD, KNIT_WIT_CONFIG_FILE);
 const getDirectoryPath = () => process.env.INIT_CWD;
@@ -27,8 +14,9 @@ const getDefaultWorld = () => process.env.npm_package_config_knitwit_world;
 
 function createFileIfNotExists(filePath, packageName, packagePath, packageWorld) {
     if (!fs.existsSync(filePath)) {
-        const initialContent = JSON.stringify({ version: 1, packages: [{ name: packageName, witPath: packagePath, world: packageWorld }] }, null, 2);
-        fs.writeFileSync(filePath, initialContent, 'utf8');
+        let initialContent = { version: 1, packages: {} };
+        initialContent.packages[packageName] = { witPath: packagePath, world: packageWorld }
+        fs.writeFileSync(filePath, JSON.stringify(initialContent, null, 2), 'utf8');
         return true
     }
     return false
@@ -38,16 +26,12 @@ async function appendEntryIfNotExists(filePath, packageName, packagePath, packag
     let fileContent = fs.readFileSync(filePath, 'utf8');
     let data = await knitWitConfigSchema.validate(JSON.parse(fileContent));
 
-    let entryExists = data.packages?.some(entry => entry.name === packageName && entry.witPath === packagePath && entry.world == packageWorld);
-
-    if (!entryExists) {
-        if (!data.packages) {
-            data.packages = []
-        }
-        data.packages.push({ name: packageName, witPath: packagePath, world: packageWorld });
-        console.log(data)
-        fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+    if (!data.packages) {
+        data.packages = {}
     }
+
+    data.packages[packageName] = { witPath: packagePath, world: packageWorld };
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
 }
 
 async function runPostInstallSetup() {

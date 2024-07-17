@@ -14,4 +14,4 @@ import { WasiFilesystemTypes } from './interfaces/wasi-filesystem-types.js';
 import { WasiIoError } from './interfaces/wasi-io-error.js';
 import { WasiIoStreams } from './interfaces/wasi-io-streams.js';
 import { WasiRandomRandom } from './interfaces/wasi-random-random.js';
-export function knitWit(witPaths: string[], worlds: string[], outputWorld: string | undefined, outputPackage: string | undefined, output: string | undefined): [string, string][];
+export function knitwit(witPaths: string[], worlds: string[], outputWorld: string | undefined, outputPackage: string | undefined, output: string | undefined): [string, string][];

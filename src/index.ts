@@ -1,26 +1,12 @@
-import { knitWit as _knitWit } from "../lib/knit-wit.js";
+import { knitwit as _knitWit } from "../lib/knitwit.js";
 import fs from "fs";
 import path from "path";
-import { InferType, object, string, array, number } from "yup";
 import { createRequire } from "module";
-
+import { knitWitConfigSchema } from "./shared/knitwitConfigSchema.js";
+import { KNIT_WIT_CONFIG_FILE } from "./shared/constants.js";
 // Create a require function based on the current working directory
+
 const require = createRequire(path.resolve(process.cwd(), "package.json"));
-
-const KNIT_WIT_CONFIG_FILE = "knit-wit.json";
-
-let knitWitConfigSchema = object({
-  version: number().required(),
-  packages: array(
-    object({
-      name: string().required(),
-      witPath: string().required(),
-      world: string().required(),
-    }),
-  ),
-});
-
-type KnitWitConfig = InferType<typeof knitWitConfigSchema>;
 
 type combinedWitOuput = [string, string][];
 
@@ -43,7 +29,7 @@ export async function knitWit(
   ignoreConfigFile: boolean = false,
 ) {
   console.log(`Attempting to read ${KNIT_WIT_CONFIG_FILE}`);
-  // attempt to read knit-wit.json to get witPaths and world details
+  // attempt to read knitwit.json to get witPaths and world details
   let { packages, witPaths, worlds } = !ignoreConfigFile
     ? await attemptParsingConfigFile()
     : { packages: [], witPaths: [], worlds: [] };
@@ -54,7 +40,7 @@ export async function knitWit(
 
   validateArguments(opts);
   // witPaths and worlds will be non empty as they will be populated from
-  // knit-wit.json if they were empty
+  // knitwit.json if they were empty
   let combinedWitOuput = _knitWit(
     opts.witPaths!,
     opts.worlds!,
@@ -78,15 +64,21 @@ async function attemptParsingConfigFile(): Promise<ParsedConfigFileOutput> {
     let packages: string[] = [];
     let witPaths: string[] = [];
     let worlds: string[] = [];
-    data?.packages?.map(async (k) => {
-      packages.push(k.name);
-      worlds.push(k.world);
-      let entrypoint = resolvePackagePath(k.name);
+    // If there is any project specifc configuration, use that as the base
+    if (data.project) {
+      witPaths = data.project.wit_paths ? data.project.wit_paths : [];
+      worlds = data.project.worlds ? data.project.worlds : [];
+    }
+    for (let dep in data?.packages) {
+      // for (package in data?.packages.map(async (k) => {
+      packages.push(dep);
+      worlds.push(data.packages[dep].world);
+      let entrypoint = resolvePackagePath(dep);
       if (entrypoint) {
-        let resolvedPath = path.resolve(entrypoint, k.witPath);
+        let resolvedPath = path.resolve(entrypoint, data.packages[dep].witPath);
         witPaths.push(resolvedPath);
       }
-    });
+    };
     return {
       packages: packages,
       witPaths: witPaths,
