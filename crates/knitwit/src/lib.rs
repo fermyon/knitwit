@@ -116,7 +116,7 @@ fn resolve_to_readable_wit(
 
     for (id, pkg) in resolve.packages.iter() {
         let is_main = main.contains(&id);
-        let output = printer.print(resolve, &[id], is_main)?;
+        let output = printer.print(resolve, &[id], false)?;
         let out_dir = if is_main {
             dir.clone()
         } else {
