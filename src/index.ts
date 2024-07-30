@@ -4,6 +4,7 @@ import path from "path";
 import { createRequire } from "module";
 import { knitWitConfigSchema } from "./shared/knitwitConfigSchema.js";
 import { KNIT_WIT_CONFIG_FILE } from "./shared/constants.js";
+import { platform } from "process";
 // Create a require function based on the current working directory
 
 const require = createRequire(path.resolve(process.cwd(), "package.json"));
@@ -35,6 +36,10 @@ export async function knitWit(
     : { packages: [], witPaths: [], worlds: [] };
   opts.witPaths = opts.witPaths ? opts.witPaths.concat(witPaths) : witPaths;
   opts.worlds = opts.worlds ? opts.worlds.concat(worlds) : worlds;
+
+
+  //sanitize paths in case of windows
+  opts.witPaths = opts.witPaths.map(maybeWindowsPath);
 
   console.log("loaded configuration for:", packages);
 
@@ -125,3 +130,11 @@ const resolvePackagePath = (packageName: string, options = {}) => {
     throw new Error(`Error resolving package: ${packageName}: ${error}`);
   }
 };
+
+const isWindows = platform === 'win32';
+
+function maybeWindowsPath(witPath: string) {
+  if (!path) return path;
+  if (!isWindows) return path.resolve(witPath);
+  return '//?/' + path.resolve(witPath).replace(/\\/g, '/');
+}
