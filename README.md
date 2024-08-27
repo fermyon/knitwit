@@ -76,13 +76,13 @@ An example of how the configuration will look is as below:
 }
 ```
 
-The executable needs to be added to the `postinstall` script after adding the `@fermyon/knitwit` package to the dependency list. 
+The executable needs to be added to the `postinstall` script after adding the `@fermyon/knitwit` package to the dependency list. The post install script takes in 2 arguments for `--wit-path` and `--world` optionally which it uses to update the  configuration. If the values are not provided, it defaults to attempting to parse it  of the `package.json`
 
 ```json
 {
     ...
     "scripts": {
-        "postinstall": "knitwit-postinstall"
+        "postinstall": "knitwit-postinstall --wit-path <path_to_wit> --world <default_world>"
     }
     ...
 }

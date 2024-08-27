@@ -5,6 +5,8 @@ import path from 'path';
 import { lock } from 'proper-lockfile';
 import { knitWitConfigSchema } from '../dist/shared/knitwitConfigSchema.js';
 import { KNIT_WIT_CONFIG_FILE } from '../dist/shared/constants.js';
+import yargs from 'yargs/yargs';
+import { hideBin } from 'yargs/helpers';
 
 const getFilePath = () => path.join(process.env.INIT_CWD, KNIT_WIT_CONFIG_FILE);
 const getDirectoryPath = () => process.env.INIT_CWD;
@@ -36,12 +38,16 @@ async function appendEntryIfNotExists(filePath, packageName, packagePath, packag
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
 }
 
-async function runPostInstallSetup() {
+async function runPostInstallSetup(withPath, world) {
     let filePath = getFilePath();
     let packageName = getPackageName();
     let directoryPath = getDirectoryPath();
-    let packagePath = getPackagePath();
-    let defaultWorld = getDefaultWorld();
+    let packagePath = withPath || getPackagePath();
+    let defaultWorld = world || getDefaultWorld();
+
+    if (!packagePath || !defaultWorld) {
+        throw new error("No pacakge path or world provided and could not be parsed from package.json");
+    }
 
     try {
         // locking is necessary as npm may install parallely and run postinstall scripts in parallel
@@ -63,4 +69,16 @@ if (process.env.INIT_CWD === process.cwd()) {
     process.exit()
 }
 
-runPostInstallSetup()
+// Parse command line arguments using yargs
+const argv = yargs(hideBin(process.argv))
+    .option('wit-path', {
+        type: 'string',
+        describe: 'Path to the wit file',
+    })
+    .option('world', {
+        type: 'string',
+        describe: 'World for the knitwit configuration',
+    })
+    .argv;
+
+runPostInstallSetup(argv.witPath, argv.world);
