@@ -6,7 +6,7 @@ interface PackageConfig {
 }
 
 interface ProjectConfig {
-    wit_paths?: string[];
+    witPaths?: string[];
     worlds?: string[];
 }
 

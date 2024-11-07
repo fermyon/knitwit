@@ -1,9 +1,6 @@
 use anyhow::anyhow;
-use std::{
-    collections::HashMap,
-    path::{Path, PathBuf},
-};
-use wit_component::{DecodedWasm, WitPrinter};
+use std::path::{Path, PathBuf};
+use wit_component::WitPrinter;
 use wit_parser::{PackageId, Resolve};
 
 wit_bindgen::generate!({
@@ -18,8 +15,7 @@ impl Guest for KnitWit {
         worlds: Vec<String>,
         output_world: Option<String>,
         output_package: Option<String>,
-        output_dir: Option<String>,
-    ) -> Result<Vec<(String, String)>, String> {
+    ) -> Result<String, String> {
         if wit_paths.is_empty() {
             return Err("No wit-paths provided".to_owned());
         }
@@ -29,7 +25,6 @@ impl Guest for KnitWit {
 
         let output_package = output_package.unwrap_or_else(|| "local:combined-wit".to_owned());
         let output_world = output_world.unwrap_or_else(|| "combined".to_owned());
-        let output_dir = output_dir.unwrap_or_else(|| "combined-wit".to_owned());
 
         let mut resolve = Resolve::default();
         let id = resolve
@@ -49,7 +44,7 @@ impl Guest for KnitWit {
 
         merge_worlds(&mut resolve, base_world, worlds).map_err(|e| e.to_string())?;
 
-        resolve_to_readable_wit(resolve, id, output_dir).map_err(|e| e.to_string())
+        resolve_to_readable_wit(&resolve, id).map_err(|e| e.to_string())
     }
 }
 
@@ -87,69 +82,21 @@ fn merge_worlds(
     Ok(())
 }
 
-fn resolve_to_readable_wit(
-    resolve: Resolve,
-    id: Vec<PackageId>,
-    output_dir: String,
-) -> anyhow::Result<Vec<(String, String)>> {
-    let mut out: Vec<(String, String)> = Vec::new();
-
-    let decoded = DecodedWasm::WitPackages(resolve, id);
-
-    let resolve = decoded.resolve();
-    let main = decoded.packages();
-
+fn resolve_to_readable_wit(resolve: &Resolve, package_id: PackageId) -> anyhow::Result<String> {
     let mut printer = WitPrinter::default();
     printer.emit_docs(false);
 
-    let mut names = HashMap::new();
-    for (_id, pkg) in resolve.packages.iter() {
-        let cnt = names
-            .entry(&pkg.name.name)
-            .or_insert(HashMap::new())
-            .entry(&pkg.name.namespace)
-            .or_insert(0);
-        *cnt += 1;
-    }
+    let ids = resolve
+        .packages
+        .iter()
+        .map(|(id, _)| id)
+        .filter(|id| *id != package_id)
+        .collect::<Vec<_>>();
 
-    let dir = PathBuf::from(output_dir);
-
-    for (id, pkg) in resolve.packages.iter() {
-        let is_main = main.contains(&id);
-        let output = printer.print(resolve, &[id], false)?;
-        let out_dir = if is_main {
-            dir.clone()
-        } else {
-            dir.join("deps")
-        };
-        let packages_with_same_name = &names[&pkg.name.name];
-        let packages_with_same_namespace = packages_with_same_name[&pkg.name.namespace];
-        let stem = if packages_with_same_name.len() == 1 {
-            if packages_with_same_namespace == 1 {
-                pkg.name.name.clone()
-            } else {
-                pkg.name
-                    .version
-                    .as_ref()
-                    .map(|ver| format!("{}@{}", pkg.name.name, ver))
-                    .unwrap_or_else(|| pkg.name.name.clone())
-            }
-        } else {
-            if packages_with_same_namespace == 1 {
-                format!("{}:{}", pkg.name.namespace, pkg.name.name)
-            } else {
-                pkg.name.to_string()
-            }
-        };
-        let filename = format!("{stem}.wit");
-        let path = out_dir.join(&filename);
-        out.push((path.to_str().unwrap_or_default().to_owned(), output));
-    }
-
-    Ok(out)
+    printer.print(resolve, package_id, &ids)
 }
 
-fn parse_wit(path: &Path) -> anyhow::Result<(Resolve, Vec<PackageId>)> {
+fn parse_wit(path: &Path) -> anyhow::Result<(Resolve, PackageId)> {
     let mut resolve = Resolve::default();
     let id = if path.is_dir() {
         resolve.push_dir(&path)?.0

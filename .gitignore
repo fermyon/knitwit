@@ -1,3 +1,5 @@
 /target
-obj
+obj/
+lib/
+dist/
 node_modules/
