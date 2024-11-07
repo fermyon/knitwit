@@ -50,7 +50,6 @@ impl Guest for KnitWit {
 
 fn merge_wits(resolve: &mut Resolve, wit_paths: Vec<String>) -> anyhow::Result<()> {
     for path in wit_paths {
-        println!("Merging wit: {}", path);
         let (temp, _) = parse_wit(&PathBuf::from(path)).map_err(|e| anyhow!("{:?}", e))?;
         resolve.merge(temp).expect("could not merge wits");
     }
