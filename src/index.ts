@@ -8,6 +8,7 @@ import { platform } from "process";
 // Create a require function based on the current working directory
 
 const require = createRequire(path.resolve(process.cwd(), "package.json"));
+const getKnitWitConfigPath = () => path.join(process.env.INIT_CWD!, process.env.npm_config_knitwit_source || KNIT_WIT_CONFIG_FILE);
 
 interface knitWitOptions {
   witPaths?: string[];
@@ -54,14 +55,15 @@ export async function knitWit(
 }
 
 async function attemptParsingConfigFile(): Promise<ParsedConfigFileOutput> {
+  let kniwitConfigPath = getKnitWitConfigPath();
   // If the file does not exist just return an empty response
-  if (!fs.existsSync(KNIT_WIT_CONFIG_FILE)) {
+  if (!fs.existsSync(kniwitConfigPath)) {
     return {
       packages: [], witPaths: [], worlds: []
     }
   }
   try {
-    let contents = fs.readFileSync(KNIT_WIT_CONFIG_FILE, "utf-8");
+    let contents = fs.readFileSync(kniwitConfigPath, "utf-8");
     let data = await knitWitConfigSchema.validate(JSON.parse(contents));
     let packages: string[] = [];
     let witPaths: string[] = [];

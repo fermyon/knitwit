@@ -8,9 +8,9 @@ import { KNIT_WIT_CONFIG_FILE } from '../dist/shared/constants.js';
 import yargs from 'yargs/yargs';
 import { hideBin } from 'yargs/helpers';
 
-const getFilePath = () => path.join(process.env.INIT_CWD, KNIT_WIT_CONFIG_FILE);
 const getDirectoryPath = () => process.env.INIT_CWD;
 const getPackageName = () => process.env.npm_package_name;
+const getKnitWitConfigPath = () => path.join(process.env.INIT_CWD, process.env.npm_config_knitwit_source || KNIT_WIT_CONFIG_FILE);
 const getPackagePath = () => process.env.npm_package_config_knitwit_witPath;
 const getDefaultWorld = () => process.env.npm_package_config_knitwit_world;
 
@@ -39,7 +39,7 @@ async function appendEntryIfNotExists(filePath, packageName, packagePath, packag
 }
 
 async function runPostInstallSetup(withPath, world) {
-    let filePath = getFilePath();
+    let filePath = getKnitWitConfigPath();
     let packageName = getPackageName();
     let directoryPath = getDirectoryPath();
     let packagePath = withPath || getPackagePath();
